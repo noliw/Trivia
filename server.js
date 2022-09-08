@@ -1,38 +1,39 @@
-const express = require('express');
-const path = require('path');
-const favicon = require('serve-favicon');
-const logger = require('morgan');
+import 'dotenv/config.js'
+import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import logger from 'morgan'
+import cors from 'cors'
 
-const app = express();
+import { router as profilesRouter } from './routes/profiles.js'
+import { router as postsRouter } from './routes/posts.js'
+import { router as authRouter } from './routes/auth.js'
 
-require('dotenv').config();
+import('./config/database.js')
 
-// Connect to the database
-require('./config/database');
+const app = express()
 
+app.use(
+  express.static(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), 'build')
+  )
+)
+app.use(cors())
+app.use(logger('dev'))
+app.use(express.json())
 
-app.use(logger('dev'));
-app.use(express.json());
+app.use('/api/profiles', profilesRouter)
+app.use('/api/auth', authRouter)
+app.use('/api/posts', postsRouter)
 
-// Configure both serve-favicon & static middleware
-// to serve from the production 'build' folder
-app.use(favicon(path.join(__dirname, 'build', 'favicon.ico')));
-app.use(express.static(path.join(__dirname, 'build')));
+app.get('/*', function (req, res) {
+  res.sendFile(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), 'build', 'index.html')
+  )
+})
 
-app.use(require('./config/checkToken'));
+const port = process.env.PORT || 3001
 
-const port = process.env.PORT ||  3001;
-
-// Put API routes here, before the "catch all" route
-app.use('/api/users', require('./routes/api/users'));
-
-
-// The following "catch all" route (note the *) is necessary
-// to return the index.html on all non-AJAX requests
-app.get('/*', function(req, res) {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-
-app.listen(port, function() {
-  console.log(`Express app running on port ${port}`);
-});
+app.listen(port, () => {
+  console.log(`Express is listening on port ${port}.`)
+})

@@ -1,46 +1,83 @@
-// LoginForm.jsx
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import '../SignupForm/SignupFormStyle.css'
+import * as authService from '../../services/authService'
 
-import { useState } from 'react';
-import * as usersService from '../../utilities/users-service';
-
-export default function LoginForm({ setUser }) {
-  const [credentials, setCredentials] = useState({
+const LoginForm = props => {
+  const [formData, setFormData] = useState({
     email: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
+    pw: '',
+  })
+  const navigate = useNavigate()
+  const [msg, setMsg] = useState('')
 
-  function handleChange(evt) {
-    setCredentials({ ...credentials, [evt.target.name]: evt.target.value });
-    setError('');
+  const handleChange = e => {
+    setMsg('')
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  async function handleSubmit(evt) {
-    // Prevent form from being submitted to the server
-    evt.preventDefault();
+  const handleSubmit = async evt => {
+    evt.preventDefault()
     try {
-      // The promise returned by the signUp service method 
-      // will resolve to the user object included in the
-      // payload of the JSON Web Token (JWT)
-      const user = await usersService.login(credentials);
-      setUser(user);
-    } catch {
-      setError('Log In Failed - Try Again');
+      await authService.login(formData)
+      props.handleSignupOrLogin()
+      navigate('/posts')
+    } catch (err) {
+      setMsg(err.message)
     }
   }
 
   return (
-    <div>
-      <div className="form-container">
-        <form autoComplete="off" onSubmit={handleSubmit}>
-          <label>Email</label>
-          <input type="text" name="email" value={credentials.email} onChange={handleChange} required />
-          <label>Password</label>
-          <input type="password" name="password" value={credentials.password} onChange={handleChange} required />
-          <button type="submit">LOG IN</button>
-        </form>
-      </div>
-      <p className="error-message">&nbsp;{error}</p>
+    <div className="signup-page">
+
+        <div className='form-container'>
+          <div className="title-container">
+            <h1>Log In</h1>
+            {msg
+              ? <h3>{msg}</h3>
+              : <h3>Share more feels!</h3>
+            }
+
+          </div>
+
+          <form className="register-form" onSubmit={handleSubmit}>
+
+            <input
+              required
+              name="email"
+              type="email"
+              autoComplete="off"
+              placeholder="Email"
+              onChange={handleChange}
+              value={formData.email}
+            />
+            <input
+              required
+              name="pw"
+              type="password"
+              autoComplete="off"
+              placeholder="Password"
+              onChange={handleChange}
+              value={formData.pw}
+            />
+
+            <button
+              autoComplete="off"
+              id="submit-button"
+              type="submit"
+            >Log In</button>
+          </form>
+          <div className="redirect-container">
+            <p>Don't have an account?</p>
+            <Link className="redirect-link" to="/signup">
+              Sign Up
+            </Link>
+          </div>
+
+        </div>
+
     </div>
-  );
+  )
 }
+
+export default LoginForm
